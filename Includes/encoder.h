@@ -11,10 +11,12 @@ struct DCcoeff{
 	
 };
 
+int encoder(char* image_file);
 float lambda(int i);
 struct interval* lvl_gen( int numlvls, int a, int b );
 void uni_quantizer(float input[][N], float output[][N], float stp_size);
 float* zzscan(float input[][N]);
+float* rasterscan(float input[][N]);
 struct DCcoeff ampsize(float* input, float array[][3], struct DCcoeff DC);
 void DCT(float input[][N], float output[][N]);
 void print_mat(float input[][N]);

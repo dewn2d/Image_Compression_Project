@@ -1,4 +1,4 @@
-#include "encoder.h"
+#include "Includes/encoder.h"
 
 int coeff[9][3] = { 
 	{ 2,  2,   3},
@@ -10,6 +10,124 @@ int coeff[9][3] = {
 	{ 8,128, 255},
 	{ 9,256, 511},
 	{10,512,1023}};
+
+int encoder(char* image_file)
+{
+	
+	int i,j,k;
+	
+	struct DCcoeff DC ={
+		.size = 0,	
+	};
+
+	int rows = 512;
+	int cols = 512;
+
+	unsigned char buff[rows*cols];
+	unsigned char image[rows][cols];
+
+	FILE* imagefp;
+	FILE* fp;
+	FILE* CoeffStream;
+
+	imagefp = fopen( image_file, "r");
+	CoeffStream = fopen( "Outputs/CoeffStream.txt", "w");
+	//fp = fopen("Outputs/mat.txt", "w");
+	
+	size_t n = fread( buff, sizeof(buff[0]), sizeof(buff), imagefp );
+	fclose(imagefp);
+	for(int i =0; i < rows; i++)
+	{
+		for(int j = 0; j < cols;j++)
+		{
+			image[j][i] = buff[(i*cols)+j];
+ 		}
+	}
+	
+	float image_mats[D*D][M][N]= {{{0}}};
+
+	int shift_rt = 0;
+	int shift_dn = 0;
+	for( i=0; i<((rows*cols)/D); i++)
+	{	
+		
+		for( j=0; j<M; j++)
+		{
+			for( k=0; k<N; k++)
+			{
+				image_mats[i][j][k] = image[(shift_dn*M)+j][(shift_rt*N)+k];
+			}	
+		}
+		/*
+		if (shift_rt==0){
+			printf("%d\n",i);
+			print_mat(image_mats[i]);
+		}
+		*/
+		if(shift_rt < M*N-1)
+			shift_rt++;
+		
+		else
+		{
+			shift_dn++;
+			shift_rt=0;
+		}
+	}
+	
+	/*
+	for (i = 0; i < rows; ++i) {
+		for( j =0; j<cols; j++)
+			fprintf(fp,"%d ", image[i][j]);
+		fprintf(fp,"\n");
+	}
+	fclose(fp);*/
+	
+	float dct[D*D][M][N] = {{{0}}};
+	float idct[D*D][M][N] = {{{0}}};
+	float quant[D*D][M][N] = {{{0}}};
+	float* zscanmat; 
+	float ampsizemat[D*D][M*N][3] = {{0}}; 
+
+	// *************encoding***************
+	for( i=0; i<((rows*cols)/D); i++)
+	{	
+		
+		DCT(image_mats[i], dct[i]);
+		uni_quantizer(dct[i],quant[i],9);
+		zscanmat = zzscan(quant[i]);
+		DC = ampsize( zscanmat, ampsizemat[i], DC );
+
+		if(i < 1){
+			print_mat(image_mats[i]);
+			print_mat(dct[i]);
+			print_mat(quant[i]);
+		
+			for(j=0;j<N*M;j++)
+				printf("%.0f ",zscanmat[j]);
+			printf("\n\n");
+	
+			/*
+			for( j=0; j<D; j++)
+				printf("(%.0f,%.0f)(%.0f), ",ampsizemat[i][j][0],ampsizemat[i][j][1],ampsizemat[i][j][2]);
+			printf("\n");	
+			*/
+		}
+		free(zscanmat);	
+	}
+	//printf("hellow\n");
+	for( i=0; i<DC.size; i++)
+	{	
+		fprintf(CoeffStream, "%.0f ", DC.coeff[i]);
+		//printf("%d\n",i);
+	}
+
+	printf("%d\n",DC.size);
+
+	fclose(CoeffStream);
+	
+	return 0;
+
+}
 
 void uni_quantizer(float input[][N], float output[][N], float stp_size)
 {
@@ -36,7 +154,6 @@ float* zzscan(float input[][N])
 	memset(scanArray,0,sizeof(scanArray));
 	int i=0, j=0, k=0;
 	int count = 0;
-
 
 	while(k<D)
 	{
@@ -120,6 +237,45 @@ float* zzscan(float input[][N])
 	return scanArray;
 }
 
+float* rasterscan(float input[][N])
+{
+
+	float *scanArray = (float *) malloc(D * sizeof(float)); 
+	memset(scanArray,0,sizeof(scanArray));
+	int i=0, j=0, k=0;
+	int count = 0;
+
+	while(k<D)
+	{
+		
+		if(j%2 ==0)
+		{
+			for(i =0; i<M; i++)
+			{
+			
+				scanArray[k] = input[i][j];
+				k++;
+			}
+		}
+		
+		else if(j%2 ==1)
+		{
+			for(i =M; i>0; i--)
+			{
+				
+				scanArray[k] = input[i][j];
+				k++;
+			}
+		}
+
+		j++;
+		
+	}
+
+	return scanArray;
+
+}
+
 struct DCcoeff ampsize(float* input, float array[][3], struct DCcoeff DC)
 {
 	
@@ -199,15 +355,14 @@ void DCT(float input[][N], float output[][N])
 			{
 				for (n =0; n<N; n++)
 				{
-					temp +=input[m][n]*
-						cos( ((2*m + 1)*k*pi)/(2*(float)M) )*
-						cos( ((2*n + 1)*l*pi)/(2*(float)N) );
+					temp += input[m][n]*
+						cos( ((2*m + 1)*k*pi)/(16.0) )*
+						cos( ((2*n + 1)*l*pi)/(16.0) );
 					
-					//printf("%f\n",temp);
 				}
 			}
 			//printf("\n");
-			output[k][l] =  lambda(k)*lambda(l)*sqrt(2/(float)N)*sqrt(2/(float)M)*temp;
+			output[k][l] =  lambda(k)*lambda(l)*(1.0/4.0)*temp;
 			//printf("%f, %f, %f\n",sqrt(2/(float)N)*sqrt(2/(float)M),temp, output[k][l]);
 
 		}
@@ -220,9 +375,9 @@ void DCT(float input[][N], float output[][N])
 float lambda(int i)
 {
 	if( i == 0 )
-		return 1/sqrt(2);
+		return 1.0/sqrt(2.0);
 	else
-		return 1;
+		return 1.0;
 }	
 
 void print_mat(float input[][N])

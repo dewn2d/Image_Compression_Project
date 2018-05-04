@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-I. 
-DEPS = 	./Includes/encoder.h ./Includes/decoder.h ./Includes/inc_def.h
-OBJ = 	Project.o encoder.o decoder.o
+DEPS = encoder.h decoder.h inc_def.h
+OBJ = Project.o encoder.o decoder.o
 
 %.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)

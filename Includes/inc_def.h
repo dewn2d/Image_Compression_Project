@@ -5,8 +5,10 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <opencv/highgui.h>
+#include <opencv/cxcore.h>
+#include <opencv/cv.h>
 
-#define MAX		600
 #define pi		3.14159265
 #define M		8
 #define N		8
