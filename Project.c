@@ -17,7 +17,7 @@ int main(void)
 {
 	
 	encoder("Images/lena.512");
-	view_image("Images/lena.bmp");
+	view_image("Images/lena.raw");
 
 	return 0;
 }

@@ -19,7 +19,8 @@ int encoder(char* image_file)
 	struct DCcoeff DC ={
 		.size = 0,	
 	};
-
+	
+	// size of image
 	int rows = 512;
 	int cols = 512;
 
@@ -27,20 +28,19 @@ int encoder(char* image_file)
 	unsigned char image[rows][cols];
 
 	FILE* imagefp;
-	FILE* fp;
-	FILE* CoeffStream;
+	FILE* DCTStream;
 
-	imagefp = fopen( image_file, "r");
-	CoeffStream = fopen( "Outputs/CoeffStream.txt", "w");
+	imagefp = fopen( image_file, "r"); //open input image
+	DCTStream = fopen( "Outputs/DCTStream.txt", "w"); // open file to store DCT coefficents DC and AC
 	//fp = fopen("Outputs/mat.txt", "w");
 	
-	size_t n = fread( buff, sizeof(buff[0]), sizeof(buff), imagefp );
+	size_t n = fread( buff, sizeof(buff[0]), sizeof(buff), imagefp ); // read pixel data from imate
 	fclose(imagefp);
 	for(int i =0; i < rows; i++)
 	{
 		for(int j = 0; j < cols;j++)
 		{
-			image[j][i] = buff[(i*cols)+j];
+			image[j][i] = buff[(i*cols)+j]; // form a matrix of the input values
  		}
 	}
 	
@@ -48,6 +48,7 @@ int encoder(char* image_file)
 
 	int shift_rt = 0;
 	int shift_dn = 0;
+
 	for( i=0; i<((rows*cols)/D); i++)
 	{	
 		
@@ -55,7 +56,7 @@ int encoder(char* image_file)
 		{
 			for( k=0; k<N; k++)
 			{
-				image_mats[i][j][k] = image[(shift_dn*M)+j][(shift_rt*N)+k];
+				image_mats[i][j][k] = image[(shift_dn*M)+j][(shift_rt*N)+k]; // divide the matrix into 64 8*8 matrices for DCT transform
 			}	
 		}
 		/*
@@ -65,39 +66,34 @@ int encoder(char* image_file)
 		}
 		*/
 		if(shift_rt < M*N-1)
-			shift_rt++;
+			shift_rt++; //move right till you reach the 63 which will be the last 8*8 matrix in the row
 		
 		else
 		{
-			shift_dn++;
-			shift_rt=0;
+			shift_dn++; // if you reach the last matrix in row got to next row
+			shift_rt=0; // start at beginning
 		}
 	}
 	
-	/*
-	for (i = 0; i < rows; ++i) {
-		for( j =0; j<cols; j++)
-			fprintf(fp,"%d ", image[i][j]);
-		fprintf(fp,"\n");
-	}
-	fclose(fp);*/
-	
+
+	/*************encoding***************/
 	float dct[D*D][M][N] = {{{0}}};
 	float idct[D*D][M][N] = {{{0}}};
 	float quant[D*D][M][N] = {{{0}}};
-	float* zscanmat; 
 	float ampsizemat[D*D][M*N][3] = {{0}}; 
 
-	// *************encoding***************
 	for( i=0; i<((rows*cols)/D); i++)
 	{	
 		
-		DCT(image_mats[i], dct[i]);
-		uni_quantizer(dct[i],quant[i],9);
-		zscanmat = zzscan(quant[i]);
-		DC = ampsize( zscanmat, ampsizemat[i], DC );
-
-		if(i < 1){
+		DCT(image_mats[i], dct[i]); //compute dct transform of matrix
+		uni_quantizer(dct[i],quant[i],9); //quantize matrix
+		float* zscanmat = zzscan(quant[i]); // zigzag scan matrix
+		DC = ampsize( zscanmat, ampsizemat[i], DC ); //get Size + amplitude representation of coefficients
+	
+		for(j=0;j<N*M;j++)
+			fprintf(DCTStream, "%.0f ",zscanmat[j]); //save strema of DCT coefficents into file for the arithmatic coder
+		
+		if(i < 1){ //printing for debugging
 			print_mat(image_mats[i]);
 			print_mat(dct[i]);
 			print_mat(quant[i]);
@@ -115,15 +111,15 @@ int encoder(char* image_file)
 		free(zscanmat);	
 	}
 	//printf("hellow\n");
-	for( i=0; i<DC.size; i++)
+	/*for( i=0; i<DC.size; i++)
 	{	
-		fprintf(CoeffStream, "%.0f ", DC.coeff[i]);
+		fprintf(DCTStream, "%.0f ", DC.coeff[i]);
 		//printf("%d\n",i);
-	}
+	}*/
 
-	printf("%d\n",DC.size);
+	//printf("%d\n",DC.size);
 
-	fclose(CoeffStream);
+	fclose(DCTStream);
 	
 	return 0;
 
@@ -379,6 +375,23 @@ float lambda(int i)
 	else
 		return 1.0;
 }	
+
+void get_bitrate( void )
+{
+
+	FILE* bitfp;
+	char *bits = malloc(1000 * sizeof(char));
+	bitfp = fopen( "map.art", "r" );
+	int size;
+	do
+	{
+		*bits++ = (char)fgetc(bitfp);
+		size++;
+
+	}while(*bits != EOF);
+	
+	
+}
 
 void print_mat(float input[][N])
 {

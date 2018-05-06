@@ -1,6 +1,6 @@
 #include "Includes/decoder.h"
 
-void decoder( char* image_file)
+int decoder( char* image_file)
 {
 	
 	int i, j, k;
@@ -13,22 +13,22 @@ void decoder( char* image_file)
 	FILE* datafp;
 	FILE* imagefp;
 
-	datafp = fopen("arithoutput.txt", "r");
-	imagefp = fopen("Images/output.512", "w");
+	datafp = fopen("arithoutput.txt", "r"); // open file of arithmatic decoded data
+	imagefp = fopen("Images/output.512", "w");// open file for final image
 
 	for( i =0; i<rows; i++)
 	{
 		for( j =0; j<cols; j++)
 		{
 			
-			fscanf(datafp, "%s ", &image[j][i]);
+			fscanf(datafp, "%s ", &image[j][i]); // creat matrix of decoded data
 		}
 	}
 
 	fclose(datafp);
 
+	/**************decoder***************/
 	float intemp[M][N] = {{0}};
-	float iqtemp[M][N] = {{0}};
 	float outtemp[M][N] = {{0}};
 
 	int shift_rt = 0;
@@ -38,25 +38,24 @@ void decoder( char* image_file)
 	{	
 
 		memset(intemp,0,sizeof(intemp));
-		memset(iqtemp,0,sizeof(intemp));
 		memset(outtemp,0,sizeof(intemp));
 
 		for( j=0; j<M; j++)
 		{
 			for( k=0; k<N; k++)
 			{
-				intemp[j][k] = image[(shift_dn*M)+j][(shift_rt*N)+k];
+				intemp[j][k] = image[(shift_dn*M)+j][(shift_rt*N)+k]; // get a 8*8 matrix out of image matrix
 			}	
 		}
 		
-		Iquantize(intemp, iqtemp);
-		IDCT(iqtemp, outtemp);
+		Iquantize(intemp, 9); // inverse quantize matrix
+		IDCT(intemp, outtemp); // inverse DCT trasnform matrix
 
 		for( j=0; j<M; j++)
 		{
 			for( k=0; k<N; k++)
 			{
-				image[(shift_dn*M)+j][(shift_rt*N)+k] = outtemp[j][k];
+				image[(shift_dn*M)+j][(shift_rt*N)+k] = outtemp[j][k]; // put matrix back into image matrix
 			}	
 		}
 
@@ -74,19 +73,35 @@ void decoder( char* image_file)
 	{
 		for(int j = 0; j < cols;j++)
 		{
-			buff[(i*cols)+j] = image[j][i]; 
+			buff[(i*cols)+j] = image[j][i]; //load buffer writing to file
  		}
 	}
 
-	size_t n = fwrite( buff, sizeof(buff[0]), sizeof(buff), imagefp );
+	size_t n = fwrite( buff, sizeof(buff[0]), sizeof(buff), imagefp ); //write data to file
 
 	fclose( imagefp);
+
+	return 0;
+
 }
 
 
 
-void Iquantize( float input[][N], float output[][N])
+void Iquantize( float input[][N], float step_size)
 {
+
+	int i, j;
+	
+	for( i=0; i<M; i++)
+	{
+		for( j=0; j<N; j++)
+		{
+		
+			input[i][j] = input[i][j]*step_size;
+		
+		}
+	}
+
 }	
 
 void IDCT(float input[][N], float output[][N])
