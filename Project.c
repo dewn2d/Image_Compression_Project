@@ -16,7 +16,7 @@ void view_image(char* file);
 int main(void) 
 {
 	
-	encoder("Images/lena.512");
+	encoder("Images/lena.raw");
 	view_image("Images/lena.raw");
 
 	return 0;
