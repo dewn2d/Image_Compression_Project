@@ -36,9 +36,9 @@ int encoder(char* image_file)
 	
 	size_t n = fread( buff, sizeof(buff[0]), sizeof(buff), imagefp ); // read pixel data from imate
 	fclose(imagefp);
-	for(int i =0; i < rows; i++)
+	for( i =0; i < rows; i++)
 	{
-		for(int j = 0; j < cols;j++)
+		for( j = 0; j < cols;j++)
 		{
 			image[j][i] = buff[(i*cols)+j]; // form a matrix of the input values
  		}
@@ -395,8 +395,9 @@ void get_bitrate( void )
 
 void print_mat(float input[][N])
 {
-	for(int i=0; i<8;i++){
-		for(int j =0; j<8; j++){
+	int i, j;
+	for( i=0; i<8;i++){
+		for(j =0; j<8; j++){
 			printf("%.1f\t", input[i][j]);
 		}
 		printf("\n");

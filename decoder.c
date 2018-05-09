@@ -69,9 +69,9 @@ int decoder( char* image_file)
 		}
 	}
 
-	for(int i =0; i < rows; i++)
+	for( i =0; i < rows; i++)
 	{
-		for(int j = 0; j < cols;j++)
+		for(j = 0; j < cols;j++)
 		{
 			buff[(i*cols)+j] = image[j][i]; //load buffer writing to file
  		}

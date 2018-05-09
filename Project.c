@@ -11,17 +11,17 @@
 #include "Includes/encoder.h"
 #include "Includes/decoder.h" 
 
-void view_image(char* file);
+//void view_image(char* file);
 
 int main(void) 
 {
 	
 	encoder("Images/lena.raw");
-	view_image("Images/lena.raw");
+	//view_image("Images/lena.raw");
 
 	return 0;
 }
-
+/*
 void view_image(char* file)
 {
   	IplImage* img = 0; 
@@ -30,7 +30,7 @@ void view_image(char* file)
   	int i,j,k;
 
   	// load an image  
-  	img=cvLoadImage(file,CV_LOAD_IMAGE_ANYCOLOR );
+  	img=cvLoadImage(file,CV_LOAD_IMAGE_COLOR );
 
   	if(!img){
     		printf("Could not load image file: %s\n",file);
@@ -57,5 +57,5 @@ void view_image(char* file)
   	cvReleaseImage(&img );
   	
 }
-
+*/
 

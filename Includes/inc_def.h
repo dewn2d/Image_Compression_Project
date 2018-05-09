@@ -5,10 +5,12 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+/*
 #include <opencv/highgui.h>
 #include <opencv/cxcore.h>
 #include <opencv/cv.h>
-
+#include <opencv2/imgcodecs/imgcodecs_c.h>
+*/
 #define pi		3.14159265
 #define M		8
 #define N		8
